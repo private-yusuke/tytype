@@ -6,12 +6,6 @@
       </md-app-toolbar>
 
       <md-app-content>
-        <!--<md-field>
-          <label>precode</label>
-          <md-textarea v-model="precode" md-autogrow disabled>{{ precode }}</md-textarea>
-          <md-icon>description</md-icon>
-        </md-field>
-        -->
         <md-card class="md-primary">
           <md-card-header>
             <md-card-header-text>
@@ -23,14 +17,15 @@
             <pre>{{ precode }}</pre>
           </md-card-content>
         </md-card>
-        <md-field>
+
+        <md-field :class="wrongClass">
           <label>Code</label>
           <md-textarea v-model="codein" @input="onCodeinUpdated" md-autogrow v-bind:disabled="isCompleted"></md-textarea>
-          <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}
-          </md-icon>
+          <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}</md-icon>
+          <span class="md-error">Wrong!</span>
         </md-field>
-        <md-content class="md-accent" v-if="isWrong">Wrong!</md-content>
         <md-content class="md-primary" v-if="isCompleted">Completed!</md-content>
+
       </md-app-content>
     </md-app>
   </div>
@@ -49,16 +44,21 @@ console.log(precode.length)
 
 function onCodeinUpdated (mes, e) {
   if (done) return
+  charCount = mes.length - 1
   console.log(charCount)
   console.log(`${mes[charCount]}, ${precode[charCount]}`, `${mes[charCount] === (precode[charCount])}`)
   if (mes[charCount] === precode[charCount]) {
-    charCount++
     this.isWrong = false
     console.log(charCount)
-    if (charCount === precode.length) {
-      console.log('Done!')
-      done = this.isCompleted = true
-      this.stat_icon = 'check_circle'
+    if (charCount === precode.length - 1) {
+      if (precode === mes) {
+        console.log('Done!')
+        done = this.isCompleted = true
+        this.stat_icon = 'check_circle'
+      } else {
+        this.isWrong = true
+        this.stat_icon = 'announcement'
+      }
     }
   } else {
     this.isWrong = true
@@ -77,6 +77,13 @@ export default {
       isWrong: false,
       isCompleted: false,
       stat_icon: null
+    }
+  },
+  computed: {
+    wrongClass () {
+      return {
+        'md-invalid': this.isWrong
+      }
     }
   },
   methods: {
