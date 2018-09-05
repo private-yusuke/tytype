@@ -9,7 +9,7 @@
         <md-card class="md-primary">
           <md-card-header>
             <md-card-header-text>
-              <div class="md-title">C++</div>
+              <div class="md-title">{{ lang }}</div>
             </md-card-header-text>
           </md-card-header>
 
@@ -31,7 +31,7 @@
           <span class="md-error">Wrong!</span>
         </md-field>
         <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
-        <md-content class="md-primary" v-if="isCompleted">Done!</md-content>
+        <md-content class="md-primary" v-if="isCompleted">Done! You can type more source code by reloading this page.</md-content>
 
       </md-app-content>
     </md-app>
@@ -136,7 +136,7 @@ ulong pow_mod(ulong n, ulong k, ulong m) {
 		return t * t % m;
 	}
 }
-`, "langauge": "D"
+`, "language": "D"
 },
 {
 "code": String.raw`
@@ -166,20 +166,45 @@ class UnionFind(T) {
 	}
 }
 `, "language": "D"
+},
+{
+"code": String.raw`
+function onCodeinUpdated (mes, e) {
+  if (done) return
+  charCount = mes.length - 1
+  if (mes[charCount] === precode[charCount]) {
+    this.isWrong = false
+    this.typed_ratio = (mes.length / precode.length) * 100
+    if (charCount === precode.length - 1) {
+      if (precode === mes) {
+        console.log('Done!')
+        done = this.isCompleted = true
+        this.stat_icon = 'check_circle'
+      } else {
+        this.isWrong = true
+        this.stat_icon = 'announcement'
+      }
+    }
+  } else {
+    this.isWrong = true
+    this.stat_icon = 'announcement'
+  }
+}`, "language": "JavaScript", "indentUnit": 2, "indent": "spaces"
 }
 ]
 
 let num = getRandomInt(codes.length)
-let precode = codes[num].code//.replace("\t", "    ")
-let lang = codes[num].language
+let selcode = codes[num]
+let precode = selcode.code//.replace("\t", "    ")
+let lang = selcode.language
 let codeInOpt =  {
   tabSize: 4,
   theme: 'base16-dark',
   lineNumbers: true,
   styleActiveLine: true,
-  indentUnit: 4,
-  indentWithTabs: true,
-  smartIndent: false,
+  indentUnit: selcode.indentUnit ? selcode.indentUnit : 4,
+  indentWithTabs: selcode.indent !== "spaces",
+	smartIndent: true,
   name: lang
 }
 var precodeOpt = Object.assign({}, codeInOpt)
@@ -193,7 +218,6 @@ console.log(precode.length)
 function onCodeinUpdated (mes, e) {
   if (done) return
   charCount = mes.length - 1
-  //console.log(`${mes[charCount]}, ${precode[charCount]}`, `${mes[charCount] === (precode[charCount])}`)
   if (mes[charCount] === precode[charCount]) {
     this.isWrong = false
     this.typed_ratio = (mes.length / precode.length) * 100
