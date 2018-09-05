@@ -14,17 +14,24 @@
           </md-card-header>
 
           <md-card-content>
-            <pre>{{ precode }}</pre>
+            <!--
+            <div v-highlight>
+            <pre><code :class="lang">{{ precode }}</code></pre>
+            </div>
+            -->
+            <codemirror readonly v-model="precode" :options="precodeOpt"></codemirror>
           </md-card-content>
         </md-card>
 
         <md-field :class="wrongClass">
           <label>Code</label>
-          <md-textarea v-model="codein" @input="onCodeinUpdated" md-autogrow v-bind:disabled="isCompleted"></md-textarea>
+          <!--<md-textarea class="disabledTab" v-model="codein" @input="onCodeinUpdated" md-autogrow v-bind:disabled="isCompleted"></md-textarea>-->
+          <codemirror style="float: left;" @input="onCodeinUpdated" v-model="codein" :options="codeInOpt"></codemirror>
           <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}</md-icon>
           <span class="md-error">Wrong!</span>
         </md-field>
-        <md-content class="md-primary" v-if="isCompleted">Completed!</md-content>
+        <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
+        <md-content class="md-primary" v-if="isCompleted">Done!</md-content>
 
       </md-app-content>
     </md-app>
@@ -32,11 +39,152 @@
 </template>
 
 <script>
+import 'codemirror/mode/javascript/javascript.js'
+import 'codemirror/theme/base16-dark.css'
 
-let precode = String.raw`
-#include <iostream>
-int main()
-`
+function getRandomInt (max) {
+  return Math.floor(Math.random() * Math.floor(max))
+}
+
+/* eslint-disable */
+let codes = [
+{"code": String.raw`
+vector<unsigned long long> generate_prime_list(unsigned long long N) {
+	vector<unsigned long long> prime_list;
+	prime_list.push_back(2);
+	bool not_prime = false;
+	for (int i = 3; i <= N; ++i)
+	{
+		for (std::vector<unsigned long long>::iterator j = prime_list.begin(); j != prime_list.end(); ++j)
+		{
+			if(i % *j == 0)
+			{
+				not_prime = true;
+				break;
+			}
+		}
+		if(!not_prime) prime_list.push_back(i);
+		not_prime = false;
+	}
+	return prime_list;
+}
+`, "language": "C++"
+},
+{"code": String.raw`
+T[] deepcopy(T)(T[] a) {
+	import std.traits : isArray;
+	static if(isArray!T) {
+		T[] res;
+		foreach(i; a) {
+			res ~= deepcopy(i);
+		}
+		return res;
+	} else {
+		return a.dup;
+	}
+}
+
+unittest
+{
+	auto a = [[[1,2],[3,4]],[[5,6],[7,8]]];
+	auto b = a.deepcopy;
+	b[0][0][1] = 100;
+	assert(a != b);
+}
+`, "language": "D"
+},
+{
+"code": String.raw`
+ulong[] generate_prime_list(T)(T N) if(isIntegral!T) {
+	ulong[] prime_list = [2];
+	bool not_prime = false;
+	foreach(i; 3..N.to!ulong+1) {
+		foreach(j; prime_list) {
+			if(i % j == 0) {
+				not_prime = true;
+				break;
+			}
+		}
+		if(!not_prime) prime_list ~= i;
+		not_prime = false;
+	}
+	return prime_list;
+}
+`, "language": "D"
+},
+{
+"code": String.raw`
+bool isPrime(ulong n) {
+	if(n <= 1) return false;
+	else if(n == 2) return true;
+	else if(n % 2 == 0) return false;
+
+	foreach(i; iota(3, n.to!double.sqrt.ceil+1, 2)) {
+		if(n % i == 0) return false;
+	}
+	return true;
+}
+`, "language": "D"
+},
+{
+"code": String.raw`
+ulong pow_mod(ulong n, ulong k, ulong m) {
+	if(k==0) return 1;
+	else if(k & 1) return pow_mod(n, k-1, m) * n % m;
+	else {
+		ulong t = pow_mod(n, k>>1, m);
+		return t * t % m;
+	}
+}
+`, "langauge": "D"
+},
+{
+"code": String.raw`
+class UnionFind(T) {
+	T[] arr;
+	this(ulong n) {
+		arr.length = n;
+		arr[] = -1;
+	}
+	T root(T x) {
+		return arr[x] < 0 ? x : root(arr[x]);
+	}
+	bool same(T x, T y) {
+		return root(x) == root(y);
+	}
+	bool unite(T x, T y) {
+		x = root(x);
+		y = root(y);
+		if(x == y) return false;
+		if(arr[x] > arr[y]) swap(x, y);
+		arr[x] += arr[y];
+		arr[y] = x;
+		return true;
+	}
+	T size(T a) {
+		return -arr[root(a)];
+	}
+}
+`, "language": "D"
+}
+]
+
+let num = getRandomInt(codes.length)
+let precode = codes[num].code//.replace("\t", "    ")
+let lang = codes[num].language
+let codeInOpt =  {
+  tabSize: 4,
+  theme: 'base16-dark',
+  lineNumbers: true,
+  styleActiveLine: true,
+  indentUnit: 4,
+  indentWithTabs: true,
+  smartIndent: false,
+  name: lang
+}
+var precodeOpt = Object.assign({}, codeInOpt)
+precodeOpt.readOnly = true
+
 precode = precode.trim()
 var charCount = 0
 var done = false
@@ -45,11 +193,10 @@ console.log(precode.length)
 function onCodeinUpdated (mes, e) {
   if (done) return
   charCount = mes.length - 1
-  console.log(charCount)
-  console.log(`${mes[charCount]}, ${precode[charCount]}`, `${mes[charCount] === (precode[charCount])}`)
+  //console.log(`${mes[charCount]}, ${precode[charCount]}`, `${mes[charCount] === (precode[charCount])}`)
   if (mes[charCount] === precode[charCount]) {
     this.isWrong = false
-    console.log(charCount)
+    this.typed_ratio = (mes.length / precode.length) * 100
     if (charCount === precode.length - 1) {
       if (precode === mes) {
         console.log('Done!')
@@ -76,7 +223,11 @@ export default {
       codein: null,
       isWrong: false,
       isCompleted: false,
-      stat_icon: null
+      typed_ratio: 0,
+      stat_icon: null,
+      lang: lang,
+      codeInOpt: codeInOpt,
+      precodeOpt: precodeOpt
     }
   },
   computed: {
