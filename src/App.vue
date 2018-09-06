@@ -22,17 +22,22 @@
             <codemirror readonly v-model="precode" :options="precodeOpt"></codemirror>
           </md-card-content>
         </md-card>
-
-        <md-field :class="wrongClass">
-          <label>Code</label>
-          <!--<md-textarea class="disabledTab" v-model="codein" @input="onCodeinUpdated" md-autogrow v-bind:disabled="isCompleted"></md-textarea>-->
-          <codemirror style="float: left;" @input="onCodeinUpdated" v-model="codein" :options="codeInOpt"></codemirror>
-          <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}</md-icon>
-          <span class="md-error">Wrong!</span>
-        </md-field>
-        <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
-        <md-content class="md-primary" v-if="isCompleted">Done! You can type more source code by reloading this page.</md-content>
-
+        <md-card>
+          <md-card-header>
+            <div class="md-title">{{ typed_count+1 + " / " + precode.length }}</div>
+          </md-card-header>
+          <md-card-content>
+            <md-field :class="wrongClass">
+              <label>Code</label>
+              <!--<md-textarea class="disabledTab" v-model="codein" @input="onCodeinUpdated" md-autogrow v-bind:disabled="isCompleted"></md-textarea>-->
+              <codemirror style="float: left;" @input="onCodeinUpdated" v-model="codein" :options="codeInOpt"></codemirror>
+              <span class="md-error">Wrong!</span>
+            </md-field>
+            <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
+            <md-content class="md-primary" v-if="isCompleted">Done! You can type more source code by reloading this page.</md-content>
+            <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}</md-icon>
+          </md-card-content>
+        </md-card>
       </md-app-content>
     </md-app>
   </div>
@@ -217,7 +222,7 @@ console.log(precode.length)
 
 function onCodeinUpdated (mes, e) {
   if (done) return
-  charCount = mes.length - 1
+  charCount = this.typed_count = mes.length - 1
   if (mes[charCount] === precode[charCount]) {
     this.isWrong = false
     this.typed_ratio = (mes.length / precode.length) * 100
@@ -248,6 +253,7 @@ export default {
       isWrong: false,
       isCompleted: false,
       typed_ratio: 0,
+      typed_count: 0,
       stat_icon: null,
       lang: lang,
       codeInOpt: codeInOpt,
