@@ -47,7 +47,8 @@
         </md-card>
         <md-card>
           <md-card-header>
-            <div class="md-title">{{ typed_count+1 + " / " + precode.length }}</div>
+            <div class="md-title" style="display: inline-block;">{{ typed_count+1 + " / " + precode.length }}</div>
+            <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}</md-icon>
           </md-card-header>
           <md-card-content>
             <md-field :class="wrongClass">
@@ -58,7 +59,6 @@
             </md-field>
             <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
             <md-content class="md-primary" v-if="isCompleted">Done! You can type more source code by reloading this page.</md-content>
-            <md-icon v-if="isWrong || isCompleted">{{ stat_icon }}</md-icon>
           </md-card-content>
         </md-card>
       </md-app-content>
