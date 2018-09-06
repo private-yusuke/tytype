@@ -1,8 +1,31 @@
 <template>
   <div id="app" class="page-container">
+    <md-dialog :md-active.sync="showDialog" style="padding: 20px;">
+      <md-dialog-title>New code</md-dialog-title>
+      <md-field>
+        <label>Language</label>
+        <md-input v-model="langInput"></md-input>
+      </md-field>
+      <md-field>
+        <label>code</label>
+        <md-textarea v-model="codeInput" :options="codeInOpt"></md-textarea>
+      </md-field>
+      <div>
+        <md-radio v-model="indentInput" value="spaces">Spaces</md-radio>
+        <md-radio v-model="indentInput" value="tabs">Tabs</md-radio>
+      </div>
+      <md-field v-if="indentInput === 'spaces'">
+        <label>Indent unit</label>
+        <md-input v-model="inputIndentUnit" type="number"></md-input>
+      </md-field>
+      <md-dialog-actions>
+        <md-button class="md-primary" style="flex: 1" @click="onClickStart">Start</md-button>
+      </md-dialog-actions>
+    </md-dialog>
     <md-app>
       <md-app-toolbar class="md-primary">
-        <span class="md-title">Tytype</span>
+        <span style="flex: 1" class="md-title">Tytype</span>
+        <md-button class="md-primary" @click="onClickNewCode">New code</md-button>
       </md-app-toolbar>
 
       <md-app-content>
@@ -217,19 +240,20 @@ precodeOpt.readOnly = true
 
 precode = precode.trim()
 var charCount = 0
-var done = false
 console.log(precode.length)
 
 function onCodeinUpdated (mes, e) {
-  if (done) return
+  console.log(mes)
+  console.log(this.precode)
+  if (this.isCompleted) return
   charCount = this.typed_count = mes.length - 1
-  if (mes[charCount] === precode[charCount]) {
+  if (mes[charCount] === this.precode[charCount]) {
     this.isWrong = false
-    this.typed_ratio = (mes.length / precode.length) * 100
-    if (charCount === precode.length - 1) {
-      if (precode === mes) {
+    this.typed_ratio = (mes.length / this.precode.length) * 100
+    if (charCount === this.precode.length - 1) {
+      if (this.precode === mes) {
         console.log('Done!')
-        done = this.isCompleted = true
+        this.isCompleted = true
         this.stat_icon = 'check_circle'
       } else {
         this.isWrong = true
@@ -240,6 +264,34 @@ function onCodeinUpdated (mes, e) {
     this.isWrong = true
     this.stat_icon = 'announcement'
   }
+}
+
+function onClickStart () {
+  this.precode = this.codeInput.trim()
+  this.codein = ""
+  this.isWrong = false
+  this.isCompleted = false
+  this.typed_ratio = 0
+  this.typed_count = 0
+  this.stat_icon = null
+  this.lang = this.langInput
+  this.showDialog = false
+  this.codeInOpt =  {
+    tabSize: 4,
+    theme: 'base16-dark',
+    lineNumbers: true,
+    styleActiveLine: true,
+    indentUnit: this.inputIndentUnit ? this.inputIndentUnit : 4,
+    indentWithTabs: this.indentInput !== "spaces",
+    smartIndent: true,
+    name: this.lang
+  }
+  this.precodeOpt = precodeOpt
+  charCount = 0
+}
+
+function onClickNewCode () {
+  this.showDialog = true
 }
 
 console.log(precode)
@@ -257,7 +309,12 @@ export default {
       stat_icon: null,
       lang: lang,
       codeInOpt: codeInOpt,
-      precodeOpt: precodeOpt
+      precodeOpt: precodeOpt,
+      showDialog: false,
+      indentInput: null,
+      langInput: null,
+      codeInput: null,
+      inputIndentUnit: null
     }
   },
   computed: {
@@ -268,7 +325,9 @@ export default {
     }
   },
   methods: {
-    onCodeinUpdated: onCodeinUpdated
+    onCodeinUpdated: onCodeinUpdated,
+    onClickNewCode: onClickNewCode,
+    onClickStart: onClickStart
   }
 }
 </script>
