@@ -1,0 +1,1 @@
+(ip => ip.reduce!max - ip.reduce!min)(readln.split.to!(int[])).writeln;

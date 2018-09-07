@@ -1,0 +1,38 @@
+{
+  "files": [
+    {
+      "filename": "deepcopy.d",
+      "language": "D"
+    },
+    {
+      "filename": "oneliner.d",
+      "language": "D"
+    },
+    {
+      "filename": "prime_list.cpp",
+      "language": "C++"
+    },
+    {
+      "filename": "prime_list.d",
+      "language": "D"
+    },
+    {
+      "filename": "prime.d",
+      "language": "D"
+    },
+    {
+      "filename": "pow_mod.d",
+      "language": "D"
+    },
+    {
+      "filename": "unionfind.d",
+      "language": "D"
+    },
+    {
+      "filename": "onCodeinUpdated.js",
+      "language": "JavaScript",
+      "indentUnit": 2,
+      "indent": "spaces"
+    }
+  ]
+}

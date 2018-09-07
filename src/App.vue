@@ -37,7 +37,7 @@
       <md-app-toolbar class="md-primary">
         <span style="flex: 1" class="md-title">Tytype</span>
         <md-button class="md-primary" @click="onClickNewCode">New code</md-button>
-        <md-button class="md-primary" @click="onClickDiff">Diff</md-button>
+        <md-button @click="onClickDiff">Diff</md-button>
       </md-app-toolbar>
 
       <md-app-content>
@@ -46,6 +46,9 @@
             <md-card-header-text>
               <div class="md-title">{{ lang }}</div>
             </md-card-header-text>
+            <md-card-actions>
+              <md-button @click="onClickReload">Reload</md-button>
+            </md-card-actions>
           </md-card-header>
 
           <md-card-content>
@@ -67,7 +70,7 @@
               <label>Code</label>
               <!--<md-textarea class="disabledTab" v-model="codein" @input="onCodeinUpdated" md-autogrow v-bind:disabled="isCompleted"></md-textarea>-->
               <codemirror style="float: left;" @input="onCodeinUpdated" v-model="codein" :options="codeInOpt"></codemirror>
-              <span class="md-error">Wrong!</span>
+              <span class="md-error">{{ wrongMessage }}</span>
             </md-field>
             <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
             <md-content class="md-primary" v-if="isCompleted">Done! You can type more source code by reloading this page.</md-content>
@@ -81,10 +84,12 @@
 <script>
 import 'codemirror/mode/javascript/javascript.js'
 import 'codemirror/theme/base16-dark.css'
+import 'codemirror/theme/base16-light.css'
 import 'codemirror/mode/css/css.js'
 import 'codemirror/addon/merge/merge.js'
 import 'codemirror/addon/merge/merge.css'
 import DiffMatchPatch from 'diff-match-patch'
+
 window.diff_match_patch = DiffMatchPatch
 window.DIFF_DELETE = -1
 window.DIFF_INSERT = 1
@@ -94,196 +99,17 @@ function getRandomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
 }
 
-/* eslint-disable */
-let codes = [
-{"code": String.raw`
-(ip => ip.reduce!max - ip.reduce!min)(readln.split.to!(int[])).writeln;
-`, "language": "D"
-},
-{"code": String.raw`
-vector<unsigned long long> generate_prime_list(unsigned long long N) {
-	vector<unsigned long long> prime_list;
-	prime_list.push_back(2);
-	bool not_prime = false;
-	for (int i = 3; i <= N; ++i)
-	{
-		for (std::vector<unsigned long long>::iterator j = prime_list.begin(); j != prime_list.end(); ++j)
-		{
-			if(i % *j == 0)
-			{
-				not_prime = true;
-				break;
-			}
-		}
-		if(!not_prime) prime_list.push_back(i);
-		not_prime = false;
-	}
-	return prime_list;
-}
-`, "language": "C++"
-},
-{"code": String.raw`
-T[] deepcopy(T)(T[] a) {
-	import std.traits : isArray;
-	static if(isArray!T) {
-		T[] res;
-		foreach(i; a) {
-			res ~= deepcopy(i);
-		}
-		return res;
-	} else {
-		return a.dup;
-	}
-}
-
-unittest
-{
-	auto a = [[[1,2],[3,4]],[[5,6],[7,8]]];
-	auto b = a.deepcopy;
-	b[0][0][1] = 100;
-	assert(a != b);
-}
-`, "language": "D"
-},
-{
-"code": String.raw`
-ulong[] generate_prime_list(T)(T N) if(isIntegral!T) {
-	ulong[] prime_list = [2];
-	bool not_prime = false;
-	foreach(i; 3..N.to!ulong+1) {
-		foreach(j; prime_list) {
-			if(i % j == 0) {
-				not_prime = true;
-				break;
-			}
-		}
-		if(!not_prime) prime_list ~= i;
-		not_prime = false;
-	}
-	return prime_list;
-}
-`, "language": "D"
-},
-{
-"code": String.raw`
-bool isPrime(ulong n) {
-	if(n <= 1) return false;
-	else if(n == 2) return true;
-	else if(n % 2 == 0) return false;
-
-	foreach(i; iota(3, n.to!double.sqrt.ceil+1, 2)) {
-		if(n % i == 0) return false;
-	}
-	return true;
-}
-`, "language": "D"
-},
-{
-"code": String.raw`
-ulong pow_mod(ulong n, ulong k, ulong m) {
-	if(k==0) return 1;
-	else if(k & 1) return pow_mod(n, k-1, m) * n % m;
-	else {
-		ulong t = pow_mod(n, k>>1, m);
-		return t * t % m;
-	}
-}
-`, "language": "D"
-},
-{
-"code": String.raw`
-class UnionFind(T) {
-	T[] arr;
-	this(ulong n) {
-		arr.length = n;
-		arr[] = -1;
-	}
-	T root(T x) {
-		return arr[x] < 0 ? x : root(arr[x]);
-	}
-	bool same(T x, T y) {
-		return root(x) == root(y);
-	}
-	bool unite(T x, T y) {
-		x = root(x);
-		y = root(y);
-		if(x == y) return false;
-		if(arr[x] > arr[y]) swap(x, y);
-		arr[x] += arr[y];
-		arr[y] = x;
-		return true;
-	}
-	T size(T a) {
-		return -arr[root(a)];
-	}
-}
-`, "language": "D"
-},
-{
-"code": String.raw`
-function onCodeinUpdated (mes, e) {
-  if (done) return
-  charCount = mes.length - 1
-  if (mes[charCount] === precode[charCount]) {
-    this.isWrong = false
-    this.typed_ratio = (mes.length / precode.length) * 100
-    if (charCount === precode.length - 1) {
-      if (precode === mes) {
-        console.log('Done!')
-        done = this.isCompleted = true
-        this.stat_icon = 'check_circle'
-      } else {
-        this.isWrong = true
-        this.stat_icon = 'announcement'
-      }
-    }
-  } else {
-    this.isWrong = true
-    this.stat_icon = 'announcement'
-  }
-}`, "language": "JavaScript", "indentUnit": 2, "indent": "spaces"
-}
-]
-
-let num = getRandomInt(codes.length)
-let selcode = codes[num]
-let precode = selcode.code//.replace("\t", "    ")
-let lang = selcode.language
-let codeInOpt =  {
-  tabSize: 4,
-  theme: 'base16-dark',
-  lineNumbers: true,
-  styleActiveLine: true,
-  indentUnit: selcode.indentUnit ? selcode.indentUnit : 4,
-  indentWithTabs: selcode.indent !== "spaces",
-	smartIndent: true,
-  name: lang
-}
-let precodeOpt = Object.assign({}, codeInOpt)
-precodeOpt.readOnly = true
-let diffOpt = Object.assign({}, precodeOpt)
-diffOpt.theme = null
-diffOpt.collapseIdentical =  false
-diffOpt.connect = 'align'
-diffOpt.origLeft = null
-diffOpt.mode = 'text/plain'
-diffOpt.highlightDifferences = true
-
-precode = precode.trim()
-var charCount = 0
-console.log(precode.length)
-
 function onCodeinUpdated (mes, e) {
   this.diffOpt.value = this.codein
   this.diffOpt.orig = this.precode
   console.log(mes)
   console.log(this.precode)
   if (this.isCompleted) return
-  charCount = this.typed_count = mes.length - 1
-  if (mes[charCount] === this.precode[charCount]) {
+  this.typed_count = mes.length - 1
+  if (mes[this.typed_count] === this.precode[this.typed_count]) {
     this.isWrong = false
     this.typed_ratio = (mes.length / this.precode.length) * 100
-    if (charCount === this.precode.length - 1) {
+    if (this.typed_count === this.precode.length - 1) {
       if (this.precode === mes) {
         console.log('Done!')
         this.isCompleted = true
@@ -291,17 +117,19 @@ function onCodeinUpdated (mes, e) {
       } else {
         this.isWrong = true
         this.stat_icon = 'announcement'
+        this.wrongMessage = 'Wrong! Consider using Diff to find out.'
       }
     }
   } else {
     this.isWrong = true
     this.stat_icon = 'announcement'
+    this.wrongMessage = 'Wrong!'
   }
 }
 
 function onClickStart () {
   this.precode = this.codeInput.trim()
-  this.codein = ""
+  this.codein = null
   this.isWrong = false
   this.isCompleted = false
   this.typed_ratio = 0
@@ -309,18 +137,16 @@ function onClickStart () {
   this.stat_icon = null
   this.lang = this.langInput
   this.showDialog = false
-  this.codeInOpt =  {
+  this.codeInOpt = {
     tabSize: 4,
     theme: 'base16-dark',
     lineNumbers: true,
     styleActiveLine: true,
     indentUnit: this.inputIndentUnit ? this.inputIndentUnit : 4,
-    indentWithTabs: this.indentInput !== "spaces",
+    indentWithTabs: this.indentInput !== 'spaces',
     smartIndent: true,
     name: this.lang
   }
-  this.precodeOpt = precodeOpt
-  charCount = 0
 }
 
 function onClickNewCode () {
@@ -333,31 +159,36 @@ function onClickDiff () {
 function onClickDiffDone () {
   this.showDiff = false
 }
-
-console.log(precode)
-
+function onClickReload () {
+  this.initPreCode()
+}
 export default {
   name: 'App',
   data () {
     return {
-      precode: precode,
+      codes: [],
+      precode: null,
       codein: null,
       isWrong: false,
       isCompleted: false,
       typed_ratio: 0,
       typed_count: 0,
       stat_icon: null,
-      lang: lang,
-      codeInOpt: codeInOpt,
-      precodeOpt: precodeOpt,
-      diffOpt: diffOpt,
+      lang: null,
+      codeInOpt: null,
+      precodeOpt: null,
+      diffOpt: null,
       showDiff: false,
       showDialog: false,
       indentInput: null,
       langInput: null,
       codeInput: null,
       inputIndentUnit: null,
+      wrongMessage: null
     }
+  },
+  async created () {
+    await this.fetchData()
   },
   computed: {
     wrongClass () {
@@ -371,7 +202,50 @@ export default {
     onClickNewCode: onClickNewCode,
     onClickStart: onClickStart,
     onClickDiff: onClickDiff,
-    onClickDiffDone: onClickDiffDone
+    onClickDiffDone: onClickDiffDone,
+    onClickReload: onClickReload,
+    async fetchData () {
+      const res = await fetch('static/sourcecodes/list.json')
+      const listjs = await res.json()
+      for (var i = 0; i < listjs.files.length; i++) {
+        const res = await fetch(`static/sourcecodes/${listjs.files[i].filename}`)
+        const sourcecode = await res.text()
+        this.codes.push(Object.assign(listjs.files[i], {'code': sourcecode}))
+      }
+      console.log(this.codes)
+
+      let initPreCode = () => {
+        let num = getRandomInt(this.codes.length)
+        let selcode = this.codes[num]
+        this.precode = String(selcode.code).trim()
+        this.lang = selcode.language
+        let codeInOpt = {
+          tabSize: 4,
+          theme: 'base16-dark',
+          lineNumbers: true,
+          styleActiveLine: true,
+          indentUnit: selcode.indentUnit ? selcode.indentUnit : 4,
+          indentWithTabs: selcode.indent !== 'spaces',
+          smartIndent: true,
+          name: this.lang
+        }
+        let precodeOpt = Object.assign({}, codeInOpt)
+        precodeOpt.readOnly = true
+        let diffOpt = Object.assign({}, precodeOpt)
+        diffOpt.theme = 'base16-light'
+        diffOpt.collapseIdentical = false
+        diffOpt.connect = 'align'
+        diffOpt.origLeft = null
+        diffOpt.mode = 'text/plain'
+        diffOpt.highlightDifferences = true
+
+        this.codeInOpt = codeInOpt
+        this.precodeOpt = precodeOpt
+        this.diffOpt = diffOpt
+      }
+      initPreCode()
+      this.initPreCode = initPreCode
+    }
   }
 }
 </script>
