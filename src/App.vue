@@ -22,10 +22,22 @@
         <md-button class="md-primary" style="flex: 1" @click="onClickStart">Start</md-button>
       </md-dialog-actions>
     </md-dialog>
+    <md-dialog :md-active.sync="showDiff" style="max-width: 768px; width: 100%;">
+      <md-dialog-title>Show diff</md-dialog-title>
+      <md-dialog-content>
+        <div class="codemirror">
+          <codemirror :merge="true" :options="diffOpt"></codemirror>
+        </div>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-button class="md-primary" @click="onClickDiffDone">Done</md-button>
+      </md-dialog-actions>
+    </md-dialog>
     <md-app>
       <md-app-toolbar class="md-primary">
         <span style="flex: 1" class="md-title">Tytype</span>
         <md-button class="md-primary" @click="onClickNewCode">New code</md-button>
+        <md-button class="md-primary" @click="onClickDiff">Diff</md-button>
       </md-app-toolbar>
 
       <md-app-content>
@@ -69,6 +81,14 @@
 <script>
 import 'codemirror/mode/javascript/javascript.js'
 import 'codemirror/theme/base16-dark.css'
+import 'codemirror/mode/css/css.js'
+import 'codemirror/addon/merge/merge.js'
+import 'codemirror/addon/merge/merge.css'
+import DiffMatchPatch from 'diff-match-patch'
+window.diff_match_patch = DiffMatchPatch
+window.DIFF_DELETE = -1
+window.DIFF_INSERT = 1
+window.DIFF_EQUAL = 0
 
 function getRandomInt (max) {
   return Math.floor(Math.random() * Math.floor(max))
@@ -76,6 +96,10 @@ function getRandomInt (max) {
 
 /* eslint-disable */
 let codes = [
+{"code": String.raw`
+(ip => ip.reduce!max - ip.reduce!min)(readln.split.to!(int[])).writeln;
+`, "language": "D"
+},
 {"code": String.raw`
 vector<unsigned long long> generate_prime_list(unsigned long long N) {
 	vector<unsigned long long> prime_list;
@@ -235,14 +259,23 @@ let codeInOpt =  {
 	smartIndent: true,
   name: lang
 }
-var precodeOpt = Object.assign({}, codeInOpt)
+let precodeOpt = Object.assign({}, codeInOpt)
 precodeOpt.readOnly = true
+let diffOpt = Object.assign({}, precodeOpt)
+diffOpt.theme = null
+diffOpt.collapseIdentical =  false
+diffOpt.connect = 'align'
+diffOpt.origLeft = null
+diffOpt.mode = 'text/plain'
+diffOpt.highlightDifferences = true
 
 precode = precode.trim()
 var charCount = 0
 console.log(precode.length)
 
 function onCodeinUpdated (mes, e) {
+  this.diffOpt.value = this.codein
+  this.diffOpt.orig = this.precode
   console.log(mes)
   console.log(this.precode)
   if (this.isCompleted) return
@@ -294,6 +327,13 @@ function onClickNewCode () {
   this.showDialog = true
 }
 
+function onClickDiff () {
+  this.showDiff = true
+}
+function onClickDiffDone () {
+  this.showDiff = false
+}
+
 console.log(precode)
 
 export default {
@@ -310,11 +350,13 @@ export default {
       lang: lang,
       codeInOpt: codeInOpt,
       precodeOpt: precodeOpt,
+      diffOpt: diffOpt,
+      showDiff: false,
       showDialog: false,
       indentInput: null,
       langInput: null,
       codeInput: null,
-      inputIndentUnit: null
+      inputIndentUnit: null,
     }
   },
   computed: {
@@ -327,7 +369,9 @@ export default {
   methods: {
     onCodeinUpdated: onCodeinUpdated,
     onClickNewCode: onClickNewCode,
-    onClickStart: onClickStart
+    onClickStart: onClickStart,
+    onClickDiff: onClickDiff,
+    onClickDiffDone: onClickDiffDone
   }
 }
 </script>
