@@ -33,11 +33,28 @@
         <md-button class="md-primary" @click="onClickDiffDone">Done</md-button>
       </md-dialog-actions>
     </md-dialog>
+    <md-dialog :md-active.sync="showAll" style="max-width: 768px; width: 100%;">
+      <md-dialog-title>Choose</md-dialog-title>
+      <md-dialog-content>
+        <md-list>
+          <md-list-item v-for="(elem, index) in this.codes" :key="elem.filename" @click="initPreCode(index)">
+            <div class="md-list-item-text">
+              <span>{{ elem.filename }}</span>
+              <span>{{ elem.language }}</span>
+            </div>
+          </md-list-item>
+        </md-list>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-button class="md-primary" @click="onClickShowAllDone">Done</md-button>
+      </md-dialog-actions>
+    </md-dialog>
     <md-app>
       <md-app-toolbar class="md-primary">
         <span style="flex: 1" class="md-title">Tytype</span>
         <md-button class="md-primary" @click="onClickNewCode">New code</md-button>
-        <md-button @click="onClickDiff">Diff</md-button>
+        <md-button @click="onClickRandom">Ramdom</md-button>
+        <md-button @click="onClickShowAll">Choose</md-button>
       </md-app-toolbar>
 
       <md-app-content>
@@ -47,7 +64,7 @@
               <div class="md-title">{{ lang }}</div>
             </md-card-header-text>
             <md-card-actions>
-              <md-button @click="onClickReload">Reload</md-button>
+              <md-button @click="onClickDiff">Diff</md-button>
             </md-card-actions>
           </md-card-header>
 
@@ -73,7 +90,7 @@
               <span class="md-error">{{ wrongMessage }}</span>
             </md-field>
             <md-progress-bar md-mode="determinate" :md-value="typed_ratio"></md-progress-bar>
-            <md-content class="md-primary" v-if="isCompleted">Done! You can type more source code by reloading this page.</md-content>
+            <md-content class="md-primary" v-if="isCompleted">Done! Select code from "CHOOSE" or Push "RANDOM".</md-content>
           </md-card-content>
         </md-card>
       </md-app-content>
@@ -159,8 +176,14 @@ function onClickDiff () {
 function onClickDiffDone () {
   this.showDiff = false
 }
-function onClickReload () {
+function onClickRandom () {
   this.initPreCode()
+}
+function onClickShowAll () {
+  this.showAll = true
+}
+function onClickShowAllDone () {
+  this.showAll = false
 }
 export default {
   name: 'App',
@@ -180,6 +203,7 @@ export default {
       diffOpt: null,
       showDiff: false,
       showDialog: false,
+      showAll: false,
       indentInput: null,
       langInput: null,
       codeInput: null,
@@ -203,19 +227,22 @@ export default {
     onClickStart: onClickStart,
     onClickDiff: onClickDiff,
     onClickDiffDone: onClickDiffDone,
-    onClickReload: onClickReload,
+    onClickRandom: onClickRandom,
+    onClickShowAll: onClickShowAll,
+    onClickShowAllDone: onClickShowAllDone,
+    async getSource (index) {
+      if (!this.codes[index].code) this.codes[index].code = await (await fetch(`static/sourcecodes/${this.codes[index].filename}`)).text()
+    },
     async fetchData () {
       const res = await fetch('static/sourcecodes/list.json')
       const listjs = await res.json()
-      for (var i = 0; i < listjs.files.length; i++) {
-        const res = await fetch(`static/sourcecodes/${listjs.files[i].filename}`)
-        const sourcecode = await res.text()
-        this.codes.push(Object.assign(listjs.files[i], {'code': sourcecode}))
-      }
+      this.codes = listjs.files
       console.log(this.codes)
 
-      let initPreCode = () => {
-        let num = getRandomInt(this.codes.length)
+      let initPreCode = async (index) => {
+        let num = (index !== undefined) ? index : getRandomInt(this.codes.length)
+        console.log(num)
+        await this.getSource(num)
         let selcode = this.codes[num]
         this.precode = String(selcode.code).trim()
         this.lang = selcode.language
@@ -242,9 +269,12 @@ export default {
         this.codeInOpt = codeInOpt
         this.precodeOpt = precodeOpt
         this.diffOpt = diffOpt
+        this.isCompleted = false
+        this.isWrong = false
+        this.codein = ''
       }
-      initPreCode()
       this.initPreCode = initPreCode
+      await initPreCode()
     }
   }
 }
