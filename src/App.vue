@@ -61,7 +61,7 @@
         <md-card class="md-primary">
           <md-card-header>
             <md-card-header-text>
-              <div class="md-title">{{ lang }}</div>
+              <div class="md-title">{{ title }}</div>
             </md-card-header-text>
             <md-card-actions>
               <md-button @click="onClickDiff">Diff</md-button>
@@ -153,6 +153,7 @@ function onClickStart () {
   this.typed_count = 0
   this.stat_icon = null
   this.lang = this.langInput
+  this.title = this.langInput
   this.showDialog = false
   this.codeInOpt = {
     tabSize: 4,
@@ -198,6 +199,7 @@ export default {
       typed_count: 0,
       stat_icon: null,
       lang: null,
+      title: null,
       codeInOpt: null,
       precodeOpt: null,
       diffOpt: null,
@@ -246,6 +248,7 @@ export default {
         let selcode = this.codes[num]
         this.precode = String(selcode.code).trim()
         this.lang = selcode.language
+        this.title = (selcode.title !== undefined) ? selcode.title : selcode.filename
         let codeInOpt = {
           tabSize: 4,
           theme: 'base16-dark',
