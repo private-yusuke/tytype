@@ -49,12 +49,22 @@
         <md-button class="md-primary" @click="onClickShowAllDone">Done</md-button>
       </md-dialog-actions>
     </md-dialog>
+    <md-dialog :md-active.sync="showSettings" style="max-width: 768px; width: 100%;">
+      <md-dialog-title>Settings</md-dialog-title>
+      <md-dialog-content>
+        <md-checkbox v-model="isSoundEnabled">Enable typing sound</md-checkbox>
+      </md-dialog-content>
+      <md-dialog-actions>
+        <md-button class="md-privary" @click="onClickSettingsDone">Done</md-button>
+      </md-dialog-actions>
+    </md-dialog>
     <md-app>
       <md-app-toolbar class="md-primary">
         <span style="flex: 1" class="md-title">Tytype</span>
         <md-button class="md-primary" @click="onClickNewCode">New code</md-button>
         <md-button @click="onClickRandom">Ramdom</md-button>
         <md-button @click="onClickShowAll">Choose</md-button>
+        <md-button @click="onClickSettings">Settings</md-button>
       </md-app-toolbar>
 
       <md-app-content>
@@ -117,10 +127,21 @@ function getRandomInt (max) {
 }
 
 function onCodeinUpdated (mes, e) {
+  if (this.isSoundEnabled && mes.length !== this.typed_count) {
+    if (mes[mes.length - 1] === '\n') {
+      this.enterSound.pause()
+      this.enterSound.currentTime = 0
+      this.enterSound.play()
+    } else {
+      this.typingSound.pause()
+      this.typingSound.currentTime = 0
+      this.typingSound.play()
+    }
+  }
   this.diffOpt.value = this.codein
   this.diffOpt.orig = this.precode
-  console.log(mes)
-  console.log(this.precode)
+  // console.log(mes)
+  // console.log(this.precode)
   if (this.isCompleted) return
   this.typed_count = mes.length - 1
   if (mes[this.typed_count] === this.precode[this.typed_count]) {
@@ -186,6 +207,12 @@ function onClickShowAll () {
 function onClickShowAllDone () {
   this.showAll = false
 }
+function onClickSettings () {
+  this.showSettings = true
+}
+function onClickSettingsDone () {
+  this.showSettings = false
+}
 export default {
   name: 'App',
   data () {
@@ -206,15 +233,20 @@ export default {
       showDiff: false,
       showDialog: false,
       showAll: false,
+      showSettings: false,
       indentInput: null,
       langInput: null,
       codeInput: null,
       inputIndentUnit: null,
-      wrongMessage: null
+      wrongMessage: null,
+      typingSound: null,
+      enterSound: null,
+      isSoundEnabled: false
     }
   },
   async created () {
     await this.fetchData()
+    await this.fetchSound()
   },
   computed: {
     wrongClass () {
@@ -232,6 +264,8 @@ export default {
     onClickRandom: onClickRandom,
     onClickShowAll: onClickShowAll,
     onClickShowAllDone: onClickShowAllDone,
+    onClickSettings: onClickSettings,
+    onClickSettingsDone: onClickSettingsDone,
     async getSource (index) {
       if (!this.codes[index].code) this.codes[index].code = await (await fetch(`static/sourcecodes/${this.codes[index].filename}`)).text()
     },
@@ -278,6 +312,12 @@ export default {
       }
       this.initPreCode = initPreCode
       await initPreCode()
+    },
+    async fetchSound () {
+      let typingSound = new Audio('static/sounds/typing.ogg')
+      let enterSound = new Audio('static/sounds/enter.ogg')
+      this.typingSound = typingSound
+      this.enterSound = enterSound
     }
   }
 }
